@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intervention_stats/screens/home_screen.dart';
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLogin = true;
   bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +88,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      if (!_isLogin) ...[
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: InputDecoration(
+                            labelText: 'Nom complet',
+                            prefixIcon: const Icon(Icons.person_outline),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide:
+                                  BorderSide(color: Colors.blue.shade300),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                          validator: (value) {
+                            if (!_isLogin && (value == null || value.isEmpty)) {
+                              return 'Veuillez entrer votre nom complet';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                       // Champ Email
                       TextFormField(
                         controller: _emailController,
@@ -241,49 +266,61 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-Future<void> _submitForm() async {
-  if (!(_formKey.currentState?.validate() ?? false)) return;
-  
-  setState(() => _isLoading = true);
-  
-  try {
-    if (_isLogin) {
-      await _login();
-    } else {
-      await _signUp();
+
+  Future<void> _submitForm() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isLogin) {
+        await _login();
+      } else {
+        await _signUp();
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
 
-Future<void> _login() async {
-  final userCredential = await _auth.signInWithEmailAndPassword(
-    email: _emailController.text.trim(),
-    password: _passwordController.text.trim(),
-  );
-  
-  if (userCredential.user != null && mounted) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+  Future<void> _login() async {
+    final userCredential = await _auth.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
     );
-  }
-}
 
-Future<void> _signUp() async {
+    if (userCredential.user != null && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+      );
+    }
+  }
+
+  Future<void> _signUp() async {
   final userCredential = await _auth.createUserWithEmailAndPassword(
     email: _emailController.text.trim(),
     password: _passwordController.text.trim(),
   );
   
-  if (userCredential.user != null && mounted) {
+  if (userCredential.user != null) {
+    // Enregistrer le nom complet dans Firestore
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userCredential.user!.uid)
+        .set({
+          'name': _nameController.text.trim(), // Utilisez le champ nom complet
+          'email': _emailController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+    
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => HomeScreen()),
     );
   }
 }
+
   void _handleAuthError(FirebaseAuthException e) {
     String errorMessage;
     switch (e.code) {
@@ -327,7 +364,8 @@ Future<void> _signUp() async {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Entrez votre email pour recevoir un lien de réinitialisation'),
+            const Text(
+                'Entrez votre email pour recevoir un lien de réinitialisation'),
             const SizedBox(height: 16),
             TextFormField(
               controller: emailController,
@@ -382,6 +420,8 @@ Future<void> _signUp() async {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
+
     super.dispose();
   }
 }

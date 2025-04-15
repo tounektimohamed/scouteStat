@@ -1,2 +1,3 @@
-2025/04/15-19:24:31.994 419d Creating DB /tmp/flutter_tools.ONDODF/flutter_tools_chrome_device.TAVOLR/Default/Site Characteristics Database since it was missing.
-2025/04/15-19:24:32.049 419d Reusing MANIFEST /tmp/flutter_tools.ONDODF/flutter_tools_chrome_device.TAVOLR/Default/Site Characteristics Database/MANIFEST-000001
+2025/04/15-20:27:06.173 9fca Reusing MANIFEST /tmp/flutter_tools.PBKUSL/flutter_tools_chrome_device.NACBFX/Default/Site Characteristics Database/MANIFEST-000001
+2025/04/15-20:27:06.177 9fca Recovering log #3
+2025/04/15-20:27:06.178 9fca Reusing old log /tmp/flutter_tools.PBKUSL/flutter_tools_chrome_device.NACBFX/Default/Site Characteristics Database/000003.log 
