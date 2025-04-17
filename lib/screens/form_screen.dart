@@ -11,53 +11,86 @@ class FormScreen extends StatefulWidget {
 
 class _FormScreenState extends State<FormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nomController = TextEditingController();
+  final _volontaireController = TextEditingController();
+  final _dureeController = TextEditingController();
   final _heuresController = TextEditingController();
+  final _refugiesController = TextEditingController();
+  final _carteController = TextEditingController();
+  final _telephoneController = TextEditingController();
   final _etablissementController = TextEditingController();
+  final _montantController = TextEditingController();
+  final _medicamentController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _remarquesController = TextEditingController();
+  final _paysController = TextEditingController();
+  final _nbActesController = TextEditingController();
+  final _rdvEtablissementController = TextEditingController();
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _userName;
   bool _isSubmitting = false;
 
-  // Données statiques
-  final List<String> _typesIntervention = [
-    'Analyse médicale',
-    'Médicament',
-    'Radiologie',
-    'Urgence',
-    'Consultation',
-    'Frais admission'
-  ];
-  final List<String> _regions = ['Sud', 'Nord'];
-  final List<String> _sexes = ['Homme', 'Femme'];
-  final List<String> _agesRefugies = [
-    '-5 ans',
-    'de 5 à 10 ans',
-    'de 10 à 18 ans',
-    '+18 à 30 ans',
-    '+30 à 50 ans',
-    '+50 ans'
-  ];
-  final List<String> _typesEtablissement = [
-    'Primary Healthcare',
-    'Secondaire',
-    'Tertiary'
-  ];
-  final List<String> _secteurs = ['Privé', 'Public'];
+  // Medical specialties list
+
+final List<String> _typesIntervention = [
+  'Consultation Médicale Générale',
+  'Urgences Médicales',
+  'Soins Infirmiers',
+  'Petite Chirurgie',
+  'Vaccination',
+  'Maternité (Accouchement)',
+  'Pédiatrie',
+  'Cardiologie',
+  'Diabétologie',
+  'Dermatologie',
+  'Ophtalmologie',
+  'ORL',
+  'Psychiatrie',
+  'Radiologie/Imagerie',
+  'Analyses Médicales',
+  'Chirurgie Générale',
+  'Soins Dentaires',
+  'Kinésithérapie',
+  'Médecine du Travail',
+  'Achat Médicaments',  // Nouveau
+  'Frais d\'Admission',  // Nouveau
+  'Autre'
+];
+
+final List<String> _typesEtablissement = [
+  'Centre de Santé de Base (CSB)',
+  'Hôpital Régional',
+  'Hôpital Universitaire (CHU)',
+  'Clinique Privée',
+  'Centre Spécialisé',
+  'Pharmacie',
+  'Laboratoire d\'Analyses',
+  'Centre d\'Hémodialyse',
+  'Autre'
+];
+
+
+ final List<String> _secteurs = ['Privé', 'Public'];
+  final List<String> _genres = ['Homme', 'Femme'];
+  final List<String> _ageCategories = ['Adulte', 'Enfant'];
 
   // Variables d'état
-  String? _sexeVolontaire;
   DateTime? _dateIntervention;
-  String? _sexeRefugie;
+  DateTime? _prochainRdv;
+  String? _genre;
   String? _typeIntervention;
-  String? _region;
-  String? _ageRefugie;
   String? _typeEtablissement;
   String? _secteur;
+  String? _ageCategory;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentUserName();
+    _loadCurrentUserName().then((_) {
+      if (_userName != null) {
+        _volontaireController.text = _userName!;
+      }
+    });
   }
 
   Future<void> _loadCurrentUserName() async {
@@ -73,20 +106,15 @@ class _FormScreenState extends State<FormScreen> {
       if (mounted) {
         setState(() {
           _userName = doc.data()?['name']?.trim();
-
-          // Si le nom n'existe pas dans Firestore
           if (_userName == null || _userName!.isEmpty) {
-            _userName = 'Utilisateur ${user.uid.substring(0, 6)}';
+            _userName = user.email?.split('@').first ?? 'Utilisateur';
           }
-
-          _nomController.text = _userName!;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _userName = 'Utilisateur inconnu';
-          _nomController.text = _userName!; // Ajout du ! pour résoudre l'erreur
+          _userName = 'Utilisateur';
         });
       }
     }
@@ -96,186 +124,224 @@ class _FormScreenState extends State<FormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Nouvelle Intervention',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
+        title: Text('Nouvelle Intervention Médicale'),
         centerTitle: true,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.help_outline),
-            onPressed: () => _showHelpDialog(context),
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade700, Colors.blue.shade400],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ],
+        ),
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Section Informations Volontaire
+              // Section 1: Basic Information
               _buildSectionHeader(
-                icon: Icons.person_outline,
-                title: 'Informations du Volontaire',
+                'Informations de base',
+                icon: Icons.info_outline,
                 color: Colors.blue,
               ),
-              SizedBox(height: 12),
-              _buildTextFormField(
-                controller: _nomController,
-                label: 'Nom complet',
-                icon: Icons.badge_outlined,
-                validator: null,
-                readOnly: true,
+              
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _volontaireController,
+                        decoration: InputDecoration(
+                          labelText: 'Volontaire',
+                          prefixIcon: Icon(Icons.person_outline, color: Colors.blue),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[100],
+                        ),
+                        readOnly: true,
+                      ),
+                      SizedBox(height: 16),
+                      _buildDateTimeField(
+                        label: 'Date',
+                        onChanged: (date) => _dateIntervention = date,
+                      ),
+                      SizedBox(height: 16),
+                      _buildTextFormField(
+                        controller: _heuresController,
+                        label: 'Heures de travail',
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _sexeVolontaire,
-                items: _sexes,
-                label: 'Sexe du volontaire',
-                icon: Icons.wc_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) =>
-                    setState(() => _sexeVolontaire = newValue),
-              ),
-
-              // Section Détails Intervention
-              SizedBox(height: 24),
+              
+              // Section 2: Patient Information
               _buildSectionHeader(
-                icon: Icons.medical_services_outlined,
-                title: 'Détails de l\'Intervention',
+                'Informations du patient',
+                icon: Icons.personal_injury,
                 color: Colors.green,
               ),
-              SizedBox(height: 12),
-              _buildDateTimeField(
-                label: 'Date de l\'intervention',
-                icon: Icons.calendar_today_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-              ),
-              SizedBox(height: 16),
-              _buildTextFormField(
-                controller: _heuresController,
-                label: 'Heures de travail',
-                icon: Icons.access_time_outlined,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value!.isEmpty) return 'Ce champ est obligatoire';
-                  if (double.tryParse(value) == null) return 'Nombre invalide';
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _typeIntervention,
-                items: _typesIntervention,
-                label: 'Type d\'intervention',
-                icon: Icons.local_hospital_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) =>
-                    setState(() => _typeIntervention = newValue),
-              ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _typeEtablissement,
-                items: _typesEtablissement,
-                label: 'Type d\'établissement',
-                icon: Icons.medical_services_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) =>
-                    setState(() => _typeEtablissement = newValue),
-              ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _secteur,
-                items: _secteurs,
-                label: 'Secteur',
-                icon: Icons.business_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) => setState(() => _secteur = newValue),
-              ),
-              SizedBox(height: 16),
-              _buildTextFormField(
-                controller: _etablissementController,
-                label: 'Établissement médical',
-                icon: Icons.local_hospital_outlined,
-                validator: (value) =>
-                    value!.isEmpty ? 'Ce champ est obligatoire' : null,
-              ),
-
-              // Section Informations Bénéficiaire
-              SizedBox(height: 24),
-              _buildSectionHeader(
-                icon: Icons.people_outline,
-                title: 'Informations du Bénéficiaire',
-                color: Colors.orange,
-              ),
-              SizedBox(height: 12),
-              _buildDropdownFormField(
-                value: _sexeRefugie,
-                items: _sexes,
-                label: 'Sexe du bénéficiaire',
-                icon: Icons.wc_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) =>
-                    setState(() => _sexeRefugie = newValue),
-              ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _ageRefugie,
-                items: _agesRefugies,
-                label: 'Âge du bénéficiaire',
-                icon: Icons.cake_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) => setState(() => _ageRefugie = newValue),
-              ),
-              SizedBox(height: 16),
-              _buildDropdownFormField(
-                value: _region,
-                items: _regions,
-                label: 'Région',
-                icon: Icons.map_outlined,
-                validator: (value) =>
-                    value == null ? 'Ce champ est obligatoire' : null,
-                onChanged: (newValue) => setState(() => _region = newValue),
-              ),
-
-              // Bouton de soumission
-              SizedBox(height: 32),
-              Center(
-                child: ElevatedButton.icon(
-                  icon: _isSubmitting
-                      ? SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Icon(Icons.save_outlined, size: 24),
-                  label: Text(
-                    'ENREGISTRER L\'INTERVENTION',
-                    style: TextStyle(fontSize: 16, letterSpacing: 0.5),
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildTextFormField(
+                        controller: _refugiesController,
+                        label: 'Réfugiés',
+                      ),
+                      _buildTextFormField(
+                        controller: _carteController,
+                        label: 'N° carte',
+                        keyboardType: TextInputType.number,
+                      ),
+                      _buildTextFormField(
+                        controller: _telephoneController,
+                        label: 'Numéro téléphone',
+                        keyboardType: TextInputType.phone,
+                      ),
+                      _buildDropdownFormField(
+                        value: _genre,
+                        items: _genres,
+                        label: 'Genre',
+                        onChanged: (value) => setState(() => _genre = value),
+                      ),
+                      _buildDropdownFormField(
+                        value: _ageCategory,
+                        items: _ageCategories,
+                        label: 'Catégorie d\'âge',
+                        onChanged: (value) => setState(() => _ageCategory = value),
+                      ),
+                      _buildTextFormField(
+                        controller: _paysController,
+                        label: 'Pays',
+                      ),
+                    ],
                   ),
+                ),
+              ),
+
+              // Section 3: Medical Information
+              _buildSectionHeader(
+                'Informations médicales',
+                icon: Icons.medical_services,
+                color: Colors.red,
+              ),
+              Card(
+                elevation: 2,
+                child: Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      _buildDropdownFormField(
+                        value: _typeIntervention,
+                        items: _typesIntervention,
+                        label: 'Type d\'intervention',
+                        onChanged: (value) => setState(() => _typeIntervention = value),
+                      ),
+                      _buildTextFormField(
+                        controller: _nbActesController,
+                        label: 'Nombre d\'actes médicaux',
+                        keyboardType: TextInputType.number,
+                      ),
+                      _buildDropdownFormField(
+                        value: _typeEtablissement,
+                        items: _typesEtablissement,
+                        label: 'Type d\'établissement',
+                        onChanged: (value) => setState(() => _typeEtablissement = value),
+                      ),
+                      _buildTextFormField(
+                        controller: _etablissementController,
+                        label: 'Nom de l\'établissement',
+                      ),
+                      _buildDropdownFormField(
+                        value: _secteur,
+                        items: _secteurs,
+                        label: 'Secteur',
+                        onChanged: (value) => setState(() => _secteur = value),
+                      ),
+                      _buildTextFormField(
+                        controller: _montantController,
+                        label: 'Montant payé',
+                        keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      _buildDateTimeField(
+                        label: 'Prochain rendez-vous',
+                        onChanged: (date) => _prochainRdv = date,
+                      ),
+                      _buildTextFormField(
+                        controller: _rdvEtablissementController,
+                        label: 'Établissement pour le RDV',
+                      ),
+                      _buildTextFormField(
+                        controller: _medicamentController,
+                        label: 'Suivi médicament',
+                        maxLines: 3,
+                      ),
+                      _buildTextFormField(
+                        controller: _descriptionController,
+                        label: 'Description',
+                        maxLines: 3,
+                      ),
+                      _buildTextFormField(
+                        controller: _remarquesController,
+                        label: 'Remarques',
+                        maxLines: 3,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              SizedBox(height: 24),
+              Container(
+                height: 50,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade600, Colors.blue.shade400],
+                  ),
+                ),
+                child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    elevation: 2,
                   ),
                   onPressed: _isSubmitting ? null : _submitForm,
+                  child: _isSubmitting
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation(Colors.white),
+                          ),
+                        )
+                      : Text(
+                          'Enregistrer',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
+              SizedBox(height: 10),
             ],
           ),
         ),
@@ -283,48 +349,54 @@ class _FormScreenState extends State<FormScreen> {
     );
   }
 
-  Widget _buildSectionHeader({
-    required IconData icon,
-    required String title,
-    required Color color,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 24, color: color),
-        SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
+  Widget _buildSectionHeader(String title, {IconData? icon, Color? color}) {
+    return Padding(
+      padding: EdgeInsets.only(top: 16, bottom: 12),
+      child: Row(
+        children: [
+          if (icon != null)
+            Icon(icon, color: color ?? Theme.of(context).primaryColor),
+          if (icon != null) SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color ?? Theme.of(context).primaryColor,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildTextFormField({
     required TextEditingController controller,
     required String label,
-    required IconData icon,
-    required String? Function(String?)? validator,
     TextInputType? keyboardType,
     bool readOnly = false,
+    int maxLines = 1,
+    Function(String)? onChanged,
   }) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          filled: true,
+          fillColor: Colors.grey[50],
         ),
-        filled: true,
+        keyboardType: keyboardType,
+        readOnly: readOnly,
+        maxLines: maxLines,
+        onChanged: onChanged,
+       // validator: (value) => value?.isEmpty ?? true ? 'Ce champ est requis' : null,
       ),
-      keyboardType: keyboardType,
-      validator: validator,
-      readOnly: readOnly,
     );
   }
 
@@ -332,45 +404,52 @@ class _FormScreenState extends State<FormScreen> {
     required String? value,
     required List<String> items,
     required String label,
-    required IconData icon,
-    required String? Function(String?)? validator,
     required Function(String?) onChanged,
   }) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      items: items.map((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      }).toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        value: value,
+        items: items.map((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+        }).toList(),
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          filled: true,
+          fillColor: Colors.grey[50],
         ),
-        filled: true,
+        //validator: (value) => value == null ? 'Ce champ est requis' : null,
+        isExpanded: true,
       ),
-      validator: validator,
     );
   }
 
   Widget _buildDateTimeField({
     required String label,
-    required IconData icon,
-    required String? Function(DateTime?)? validator,
+    required Function(DateTime?) onChanged,
   }) {
     return DateTimeField(
       format: DateFormat('yyyy-MM-dd'),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(8),
         ),
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         filled: true,
+        fillColor: Colors.grey[50],
+        suffixIcon: Icon(Icons.calendar_today, size: 20),
       ),
       onShowPicker: (context, currentValue) async {
         final date = await showDatePicker(
@@ -382,141 +461,111 @@ class _FormScreenState extends State<FormScreen> {
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: ColorScheme.light(
-                  primary: Theme.of(context).primaryColor,
+                  primary: Colors.blue.shade600,
+                  onPrimary: Colors.white,
+                  onSurface: Colors.black,
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.blue.shade600,
+                  ),
                 ),
               ),
               child: child!,
             );
           },
         );
-        setState(() => _dateIntervention = date);
+        if (date != null) {
+          onChanged(date);
+        }
         return date;
       },
-      validator: validator,
-    );
-  }
-
-  void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Aide'),
-        content: Text(
-          'Remplissez tous les champs obligatoires pour enregistrer une nouvelle intervention. '
-          'Les champs marqués d\'un astérisque (*) sont obligatoires.',
-        ),
-        actions: [
-          TextButton(
-            child: Text('OK'),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
+      //validator: (value) => value == null ? 'Ce champ est requis' : null,
     );
   }
 
   Future<void> _submitForm() async {
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veuillez remplir tous les champs obligatoires'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (_dateIntervention == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Veuillez sélectionner une date valide'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
 
     try {
       final user = _auth.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                'Vous devez être connecté pour soumettre une intervention'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-
-      // Assure que le nom est toujours rempli
-      if (_nomController.text.isEmpty && _userName != null) {
-        _nomController.text = _userName!;
-      }
+      if (user == null) throw Exception('User not logged in');
 
       await FirebaseFirestore.instance.collection('interventions').add({
         'userId': user.uid,
-        'nomVolontaire': _nomController.text.isNotEmpty
-            ? _nomController.text
-            : _userName ?? 'Utilisateur inconnu',
-        'sexeVolontaire': _sexeVolontaire,
-        'dateIntervention': Timestamp.fromDate(_dateIntervention!),
-        'heuresTravail': double.tryParse(_heuresController.text) ?? 0.0,
+        'volontaire': _volontaireController.text,
+        'date': _dateIntervention,
+        'heuresTravail': double.tryParse(_heuresController.text),
+        'refugies': _refugiesController.text,
+        'carteNumero': _carteController.text,
+        'telephone': _telephoneController.text,
+        'genre': _genre,
+        'ageCategory': _ageCategory,
+        'pays': _paysController.text,
         'typeIntervention': _typeIntervention,
-        'etablissement': _etablissementController.text,
+        'nbActesMedicaux': int.tryParse(_nbActesController.text),
         'typeEtablissement': _typeEtablissement,
+        'etablissementMedical': _etablissementController.text,
         'secteur': _secteur,
-        'sexeRefugie': _sexeRefugie,
-        'ageRefugie': _ageRefugie,
-        'region': _region,
+        'montantPaye': double.tryParse(_montantController.text),
+        'prochainRdv': _prochainRdv,
+        'rdvEtablissement': _rdvEtablissementController.text,
+        'suiviMedicament': _medicamentController.text,
+        'description': _descriptionController.text,
+        'remarques': _remarquesController.text,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Intervention enregistrée avec succès!'),
-          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 3),
+          backgroundColor: Colors.green,
         ),
       );
 
-      // Réinitialisation du formulaire
+      // Reset form
       _formKey.currentState?.reset();
       setState(() {
-        _sexeVolontaire = null;
         _dateIntervention = null;
-        _sexeRefugie = null;
+        _prochainRdv = null;
+        _genre = null;
+        _ageCategory = null;
         _typeIntervention = null;
-        _region = null;
-        _ageRefugie = null;
         _typeEtablissement = null;
         _secteur = null;
-        _heuresController.clear();
-        _etablissementController.clear();
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Erreur: ${e.toString()}'),
+          behavior: SnackBarBehavior.floating,
           backgroundColor: Colors.red,
-          duration: Duration(seconds: 5),
         ),
       );
     } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
-      }
+      setState(() => _isSubmitting = false);
     }
   }
 
   @override
   void dispose() {
-    _nomController.dispose();
+    _volontaireController.dispose();
+    _dureeController.dispose();
     _heuresController.dispose();
+    _refugiesController.dispose();
+    _carteController.dispose();
+    _telephoneController.dispose();
     _etablissementController.dispose();
+    _montantController.dispose();
+    _medicamentController.dispose();
+    _descriptionController.dispose();
+    _remarquesController.dispose();
+    _paysController.dispose();
+    _nbActesController.dispose();
+    _rdvEtablissementController.dispose();
     super.dispose();
   }
 }

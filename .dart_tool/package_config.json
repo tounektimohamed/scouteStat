@@ -218,6 +218,12 @@
       "languageVersion": "3.0"
     },
     {
+      "name": "shimmer",
+      "rootUri": "file:///home/tounekti/.pub-cache/hosted/pub.dev/shimmer-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
       "name": "sky_engine",
       "rootUri": "file:///home/tounekti/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
@@ -302,7 +308,7 @@
       "languageVersion": "2.17"
     }
   ],
-  "generated": "2025-04-15T23:06:27.730822Z",
+  "generated": "2025-04-17T19:32:41.858935Z",
   "generator": "pub",
   "generatorVersion": "3.4.3",
   "flutterRoot": "file:///home/tounekti/flutter",

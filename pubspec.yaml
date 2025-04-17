@@ -17,6 +17,7 @@ dependencies:
   firebase_auth: ^5.5.2
   firebase_core: ^3.13.0
   csv: ^6.0.0
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
