@@ -1,16 +1,47 @@
-# statrais
+<div align="center">
 
-A new Flutter project.
+<h1>ScouteStat 📈</h1>
 
-## Getting Started
+**ScouteStat** is a statistics companion for scout leaders, letting units track and visualize their activities on mobile.
 
-This project is a starting point for a Flutter application.
+![Flutter](https://img.shields.io/badge/Flutter-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-0175C2?logo=dart&logoColor=white)
 
-A few resources to get you started if this is your first Flutter project:
+</div>
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
+## 📖 Overview
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+**ScouteStat** is a statistics companion for scout leaders, letting units track and visualize their activities on mobile.
+
+## ✨ Features
+
+- Unit activity tracking
+- Statistics & visualization
+- Cross-platform mobile
+
+
+## 🛠 Tech Stack
+
+Flutter, Dart.
+
+## 🚀 Getting Started
+
+```bash
+git clone <repo-url>
+cd <repo>
+flutter pub get
+flutter run
+```
+
+> Requires the [Flutter SDK](https://docs.flutter.dev/get-started/install) (stable channel).
+
+## 📬 Contact
+
+- **Email:** tounekti17@gmail.com
+- **LinkedIn:** [tounekti-mohamed](https://www.linkedin.com/in/tounekti-mohamed-b38935213/)
+- **GitHub:** [tounektimohamed](https://github.com/tounektimohamed)
+
+---
+
+<div align="center">Built with ❤️ by **Mohamed Tounekti**</div>
